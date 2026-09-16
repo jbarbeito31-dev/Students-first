@@ -194,10 +194,18 @@ else:
                         except Exception as e:
                             st.error(f"Error: {e}")
 
-    # ==========================================
+     # ==========================================
     # TAB 4: PRACTICE TEST PDF GENERATOR
     # ==========================================
     with tab4:
-        st.header("📄 Custom Practice Test Generator")
-        st.write("Generate a customized practice exam and download it as a printable PDF.")
+        st.header("📄 Custom Practice Test PDF Generator")
+        st.write("Generate a full practice exam on any topic and download it instantly as a clean, printable PDF.")
 
+        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration, Calculus Limits", key="test_topic")
+        test_type = st.selectbox("Format Style:", ["Multiple Choice Quiz", "Short Answer / Essay Prompts"], key="test_format")
+        num_questions = st.slider("Number of Questions:", min_value=5, max_value=15, value=5, key="test_count")
+
+        if st.button("📝 Compile PDF Exam", key="pdf_btn"):
+            if not test_topic:
+                st.warning("Please type a topic first.")
+            else:
