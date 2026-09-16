@@ -76,7 +76,7 @@ else:
                                     },
                                     "required": ["question", "answer"]
                                 }
-                            )
+                            }
                         )
                     )
                     st.session_state['app_deck'] = json.loads(response.text)
