@@ -180,22 +180,21 @@ else:
                             st.error(f"Error: {e}")
 
     # ==========================================
-    # TAB 4: PRACTICE TEST PDF GENERATOR
+    # TAB 4: PRACTICE TEST PDF GENERATOR (MULTIMODAL UPGRADE)
     # ==========================================
     with tab4:
-        st.header("📄 Custom Practice Test PDF Generator")
-        st.write("Generate a full practice exam on any topic and download it instantly as a clean, printable PDF.")
+        st.header("📄 File Upload ➡️ Custom Practice Test PDF")
+        st.write("Upload a PDF document, notes image, or syllabus file. The AI reads it and compiles a printable test paper.")
 
-        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration, Calculus Limits", key="test_topic")
+        # New multimodal uploader added specifically for the exam creator
+        uploaded_exam_material = st.file_uploader(
+            "Upload your study notes or reference text:", 
+            type=["pdf", "jpg", "jpeg", "png"], 
+            key="exam_multimodal_uploader"
+        )
+        
         test_type = st.selectbox("Format Style:", ["Multiple Choice Quiz", "Short Answer / Essay Prompts"], key="test_format")
         num_questions = st.slider("Number of Questions:", min_value=5, max_value=15, value=5, key="test_count")
 
         if st.button("📝 Compile PDF Exam", key="pdf_btn"):
-            if not test_topic:
-                st.warning("Please type a topic first.")
-            else:
-                with st.spinner("AI is crafting your exam paper and assembling the PDF layout..."):
-
-
-                    # Build the PDF using fpdf
-                    pdf = FPDF()
+            if not uploaded_exam_material:
