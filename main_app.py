@@ -31,13 +31,12 @@ else:
     ])
 
     # ==========================================
-    # TAB 1: MULTIMODAL FLASHCARD MAKER (PDF / IMAGE)
+    # TAB 1: MULTIMODAL FLASHCARD MAKER
     # ==========================================
     with tab1:
         st.header("⚡ Upload Notes ➡️ Get Flashcards")
-        st.write("Upload a PDF document, worksheet, or a photo of your handwritten notes to generate a custom deck!")
+        st.write("Upload a PDF document, worksheet, or a photo of your notes to generate a custom deck!")
 
-        # File uploader that supports images and PDFs directly
         uploaded_study_file = st.file_uploader(
             "Upload your study material:", 
             type=["pdf", "jpg", "jpeg", "png"], 
@@ -52,26 +51,17 @@ else:
             else:
                 with st.spinner("Reading your file and synthesizing custom flashcards..."):
                     card_prompt = f"Create exactly {card_count} study flashcards based directly on the attached material. Extract the most important formulas, terms, or concepts."
-                    
-                    # Prepare the multimodal inputs array
                     ai_inputs = [card_prompt]
                     file_type = uploaded_study_file.type
                     
                     try:
-                        # Process based on file type
                         if "pdf" in file_type:
                             pdf_bytes = uploaded_study_file.read()
-                            ai_inputs.append(
-                                types.Part.from_bytes(
-                                    data=pdf_bytes,
-                                    mime_type="application/pdf"
-                                )
-                            )
+                            ai_inputs.append(types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"))
                         else:
                             img = Image.open(uploaded_study_file)
                             ai_inputs.append(img)
                             
-                        # UPDATED MODEL TO GEMINI-3.6-FLASH
                         response = client.models.generate_content(
                             model='gemini-3.6-flash', 
                             contents=ai_inputs,
@@ -90,14 +80,12 @@ else:
                                 }
                             )
                         )
-                        
                         st.session_state['app_deck'] = json.loads(response.text)
                         st.session_state['app_deck_index'] = 0
                         st.success("Deck created successfully from your file!")
                     except Exception as e:
-                        st.error(f"Failed to generate flashcards. Error details: {e}")
+                        st.error(f"Failed to generate flashcards: {e}")
 
-        # Render active cards
         if 'app_deck' in st.session_state and st.session_state['app_deck']:
             current_deck = st.session_state['app_deck']
             current_idx = st.session_state['app_deck_index']
@@ -140,7 +128,6 @@ else:
                     Instead, identify the core concept and provide a 'Step 1' hint to help the user solve it.
                     """
                     try:
-                        # UPDATED MODEL TO GEMINI-3.6-FLASH
                         response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, tutor_prompt])
                         st.subheader("💡 Coach's Guidance:")
                         st.write(response.text)
@@ -160,7 +147,6 @@ else:
                         2. Explain WHY their logic works, or gently guide them if they made a mistake.
                         """
                         try:
-                            # UPDATED MODEL TO GEMINI-3.6-FLASH
                             response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, verify_prompt])
                             st.subheader("📋 Coach's Feedback:")
                             st.write(response.text)
@@ -172,7 +158,7 @@ else:
     # ==========================================
     with tab3:
         st.header("✍️ Essay Grammar & Style Checker")
-        st.write("Paste your text (up to 3,000 words) to receive professional, formatted editing feedback.")
+        st.write("Paste your text (up to 3,000 words) to receive professional editing feedback.")
 
         user_essay = st.text_area("Paste your essay text here:", height=250, placeholder="Type or paste your essay...", key="essay_text")
 
@@ -187,21 +173,20 @@ else:
                     with st.spinner("Reviewing your writing..."):
                         essay_prompt = f"Act as an English professor. Review this essay for a grade, specific grammar corrections, and style tips:\n\n'{user_essay}'"
                         try:
-                            # UPDATED MODEL TO GEMINI-3.6-FLASH
                             response = client.models.generate_content(model='gemini-3.6-flash', contents=essay_prompt)
                             st.subheader("📋 Professor Feedback Report")
                             st.write(response.text)
                         except Exception as e:
                             st.error(f"Error: {e}")
 
-     # ==========================================
+    # ==========================================
     # TAB 4: PRACTICE TEST PDF GENERATOR
     # ==========================================
     with tab4:
         st.header("📄 Custom Practice Test PDF Generator")
         st.write("Generate a full practice exam on any topic and download it instantly as a clean, printable PDF.")
 
-        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration, Calculus Limits", key="test_topic")
+        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration", key="test_topic")
         test_type = st.selectbox("Format Style:", ["Multiple Choice Quiz", "Short Answer / Essay Prompts"], key="test_format")
         num_questions = st.slider("Number of Questions:", min_value=5, max_value=15, value=5, key="test_count")
 
@@ -209,3 +194,4 @@ else:
             if not test_topic:
                 st.warning("Please type a topic first.")
             else:
+                with st.spinner("AI is crafting your exam paper and assembling the PDF layout..."):
