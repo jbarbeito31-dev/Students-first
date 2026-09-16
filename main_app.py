@@ -14,7 +14,7 @@ st.write("A completely free prototype to test features before our charity-backed
 # 2. Setup the Free Tier API Guardrail
 st.sidebar.header("🔑 Setup")
 api_key = st.sidebar.text_input("Enter your free Gemini API Key to test:", type="password")
-st.sidebar.markdown("[Get a free API key here](https://aistudio.google.com/)")
+st.sidebar.markdown("[Get a free API key here](https://google.com)")
 
 if not api_key:
     st.info("💡 Drop a Gemini API Key in the sidebar to unlock all the prototype study tools!")
@@ -60,7 +60,6 @@ else:
                     try:
                         # Process based on file type
                         if "pdf" in file_type:
-                            # Safely read PDF binary bytes to send straight to Gemini
                             pdf_bytes = uploaded_study_file.read()
                             ai_inputs.append(
                                 types.Part.from_bytes(
@@ -69,13 +68,12 @@ else:
                                 )
                             )
                         else:
-                            # Process as a standard image file
                             img = Image.open(uploaded_study_file)
                             ai_inputs.append(img)
                             
-                        # Force Gemini to return structural JSON
+                        # UPDATED MODEL TO GEMINI-3.6-FLASH
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash', 
+                            model='gemini-3.6-flash', 
                             contents=ai_inputs,
                             config=types.GenerateContentConfig(
                                 response_mime_type="application/json",
@@ -93,7 +91,6 @@ else:
                             )
                         )
                         
-                        # Store deck into app's active session state
                         st.session_state['app_deck'] = json.loads(response.text)
                         st.session_state['app_deck_index'] = 0
                         st.success("Deck created successfully from your file!")
@@ -143,7 +140,8 @@ else:
                     Instead, identify the core concept and provide a 'Step 1' hint to help the user solve it.
                     """
                     try:
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=[image, tutor_prompt])
+                        # UPDATED MODEL TO GEMINI-3.6-FLASH
+                        response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, tutor_prompt])
                         st.subheader("💡 Coach's Guidance:")
                         st.write(response.text)
                     except Exception as e:
@@ -162,7 +160,8 @@ else:
                         2. Explain WHY their logic works, or gently guide them if they made a mistake.
                         """
                         try:
-                            response = client.models.generate_content(model='gemini-2.5-flash', contents=[image, verify_prompt])
+                            # UPDATED MODEL TO GEMINI-3.6-FLASH
+                            response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, verify_prompt])
                             st.subheader("📋 Coach's Feedback:")
                             st.write(response.text)
                         except Exception as e:
@@ -188,7 +187,8 @@ else:
                     with st.spinner("Reviewing your writing..."):
                         essay_prompt = f"Act as an English professor. Review this essay for a grade, specific grammar corrections, and style tips:\n\n'{user_essay}'"
                         try:
-                            response = client.models.generate_content(model='gemini-2.5-flash', contents=essay_prompt)
+                            # UPDATED MODEL TO GEMINI-3.6-FLASH
+                            response = client.models.generate_content(model='gemini-3.6-flash', contents=essay_prompt)
                             st.subheader("📋 Professor Feedback Report")
                             st.write(response.text)
                         except Exception as e:
@@ -199,3 +199,5 @@ else:
     # ==========================================
     with tab4:
         st.header("📄 Custom Practice Test Generator")
+        st.write("Generate a customized practice exam and download it as a printable PDF.")
+
