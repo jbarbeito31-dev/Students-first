@@ -49,41 +49,42 @@ else:
             if not uploaded_study_file:
                 st.warning("Please upload a file or photo first!")
             else:
-                card_prompt = f"Create exactly {card_count} study flashcards based directly on the attached material. Extract the most important formulas, terms, or concepts."
-                ai_inputs = [card_prompt]
-                file_type = uploaded_study_file.type
-                
-                try:
-                    if "pdf" in file_type:
-                        pdf_bytes = uploaded_study_file.read()
-                        ai_inputs.append(types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"))
-                    else:
-                        img = Image.open(uploaded_study_file)
-                        ai_inputs.append(img)
-                        
-                    response = client.models.generate_content(
-                        model='gemini-3.6-flash', 
-                        contents=ai_inputs,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema={
-                                "type": "ARRAY",
-                                "items": {
-                                    "type": "OBJECT",
-                                    "properties": {
-                                        "question": {"type": "STRING"},
-                                        "answer": {"type": "STRING"}
-                                    },
-                                    "required": ["question", "answer"]
+                with st.spinner("Reading your file and synthesizing custom flashcards..."):
+                    card_prompt = f"Create exactly {card_count} study flashcards based directly on the attached material. Extract the most important formulas, terms, or concepts."
+                    ai_inputs = [card_prompt]
+                    file_type = uploaded_study_file.type
+                    
+                    try:
+                        if "pdf" in file_type:
+                            pdf_bytes = uploaded_study_file.read()
+                            ai_inputs.append(types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"))
+                        else:
+                            img = Image.open(uploaded_study_file)
+                            ai_inputs.append(img)
+                            
+                        response = client.models.generate_content(
+                            model='gemini-3.6-flash', 
+                            contents=ai_inputs,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                response_schema={
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "question": {"type": "STRING"},
+                                            "answer": {"type": "STRING"}
+                                        },
+                                        "required": ["question", "answer"]
+                                    }
                                 }
-                            }
+                            )
                         )
-                    )
-                    st.session_state['app_deck'] = json.loads(response.text)
-                    st.session_state['app_deck_index'] = 0
-                    st.success("Deck created successfully from your file!")
-                except Exception as e:
-                    st.error(f"Failed to generate flashcards: {e}")
+                        st.session_state['app_deck'] = json.loads(response.text)
+                        st.session_state['app_deck_index'] = 0
+                        st.success("Deck created successfully from your file!")
+                    except Exception as e:
+                        st.error(f"Failed to generate flashcards: {e}")
 
         if 'app_deck' in st.session_state and st.session_state['app_deck']:
             current_deck = st.session_state['app_deck']
@@ -120,17 +121,18 @@ else:
             st.image(image, caption="Your Uploaded Homework", width=400)
             
             if st.button("🧠 Ask Coach for Help", key="coach_help_btn"):
-                tutor_prompt = """
-                You are an encouraging academic tutor. Look at this image. 
-                CRITICAL: Do NOT give the final answer under any circumstances. 
-                Instead, identify the core concept and provide a 'Step 1' hint to help the user solve it.
-                """
-                try:
-                    response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, tutor_prompt])
-                    st.subheader("💡 Coach's Guidance:")
-                    st.write(response.text)
-                except Exception as e:
-                    st.error(f"Error: {e}")
+                with st.spinner("Analyzing problem..."):
+                    tutor_prompt = """
+                    You are an encouraging academic tutor. Look at this image. 
+                    CRITICAL: Do NOT give the final answer under any circumstances. 
+                    Instead, identify the core concept and provide a 'Step 1' hint to help the user solve it.
+                    """
+                    try:
+                        response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, tutor_prompt])
+                        st.subheader("💡 Coach's Guidance:")
+                        st.write(response.text)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
 
             st.divider()
             st.subheader("✅ Submit Your Attempted Solution")
@@ -138,17 +140,18 @@ else:
             
             if st.button("📝 Verify My Answer", key="coach_verify_btn"):
                 if user_text_attempt:
-                    verify_prompt = f"""
-                    The student is working on the image problem. They attempted this solution: '{user_text_attempt}'.
-                    1. State clearly if they are correct. 
-                    2. Explain WHY their logic works, or gently guide them if they made a mistake.
-                    """
-                    try:
-                        response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, verify_prompt])
-                        st.subheader("📋 Coach's Feedback:")
-                        st.write(response.text)
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+                    with st.spinner("Checking logic..."):
+                        verify_prompt = f"""
+                        The student is working on the image problem. They attempted this solution: '{user_text_attempt}'.
+                        1. State clearly if they are correct. 
+                        2. Explain WHY their logic works, or gently guide them if they made a mistake.
+                        """
+                        try:
+                            response = client.models.generate_content(model='gemini-3.6-flash', contents=[image, verify_prompt])
+                            st.subheader("📋 Coach's Feedback:")
+                            st.write(response.text)
+                        except Exception as e:
+                            st.error(f"Error: {e}")
 
     # ==========================================
     # TAB 3: ESSAY GRAMMAR CHECKER
@@ -167,13 +170,14 @@ else:
                 st.error("❌ Your essay exceeds the 3,000-word limit.")
             else:
                 if st.button("🔍 Analyze Essay", key="essay_btn"):
-                    essay_prompt = f"Act as an English professor. Review this essay for a grade, specific grammar corrections, and style tips:\n\n'{user_essay}'"
-                    try:
-                        response = client.models.generate_content(model='gemini-3.6-flash', contents=essay_prompt)
-                        st.subheader("📋 Professor Feedback Report")
-                        st.write(response.text)
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+                    with st.spinner("Reviewing your writing..."):
+                        essay_prompt = f"Act as an English professor. Review this essay for a grade, specific grammar corrections, and style tips:\n\n'{user_essay}'"
+                        try:
+                            response = client.models.generate_content(model='gemini-3.6-flash', contents=essay_prompt)
+                            st.subheader("📋 Professor Feedback Report")
+                            st.write(response.text)
+                        except Exception as e:
+                            st.error(f"Error: {e}")
 
     # ==========================================
     # TAB 4: PRACTICE TEST PDF GENERATOR
@@ -182,7 +186,7 @@ else:
         st.header("📄 Custom Practice Test PDF Generator")
         st.write("Generate a full practice exam on any topic and download it instantly as a clean, printable PDF.")
 
-        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration", key="test_topic")
+        test_topic = st.text_input("Enter exam topic:", placeholder="e.g., Cellular Respiration, Calculus Limits", key="test_topic")
         test_type = st.selectbox("Format Style:", ["Multiple Choice Quiz", "Short Answer / Essay Prompts"], key="test_format")
         num_questions = st.slider("Number of Questions:", min_value=5, max_value=15, value=5, key="test_count")
 
@@ -190,14 +194,8 @@ else:
             if not test_topic:
                 st.warning("Please type a topic first.")
             else:
-                test_prompt = f"Create a comprehensive school exam about '{test_topic}' with exactly {num_questions} questions formatted cleanly in a '{test_type}' format. Include an 'ANSWER KEY' section at the absolute bottom."
-                
-                try:
-                    response = client.models.generate_content(model='gemini-3.6-flash', contents=test_prompt)
-                    exam_text = response.text
-                    
-                    st.success("Exam content successfully drafted! Preview:")
-                    st.text_area("Exam Layout Preview", value=exam_text, height=200, key="pdf_preview")
+                with st.spinner("AI is crafting your exam paper and assembling the PDF layout..."):
+
 
                     # Build the PDF using fpdf
                     pdf = FPDF()
